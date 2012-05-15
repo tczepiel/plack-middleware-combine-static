@@ -9,7 +9,8 @@ WriteMakefile(
         'Plack::Request' => 0,
         'Try::Tiny'      => 0,
         'Perl6::Slurp'   => 0,
-    },    # e.g., Module::Name => 1.1
+        'Class::Load'    => 0,
+    },
     (
         $] >= 5.005
         ?    ## Add these new keywords supported since 5.005
