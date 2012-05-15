@@ -1,0 +1,6 @@
+Changes
+Makefile.PL
+MANIFEST
+README
+t/Plack-Middleware-DynamicAssets.t
+lib/Plack/Middleware/DynamicAssets.pm

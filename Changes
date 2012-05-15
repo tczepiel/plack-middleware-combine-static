@@ -1,0 +1,6 @@
+Revision history for Perl extension Plack::Middleware::DynamicAssets.
+
+0.01  Tue May 15 21:35:56 2012
+	- original version
+		-X Plack::Middleware::DynamicAssets
+
