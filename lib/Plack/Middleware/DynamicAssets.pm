@@ -100,7 +100,8 @@ sub _slurp {
 
     my ( $content_type, $content );
     for (@_) {
-        $content_type ||= Plack::MIME->mime_type($_), $content .= slurp;
+        $content_type ||= Plack::MIME->mime_type($_);
+        $content .= slurp;
     }
 
     return $content_type, $content;
