@@ -1,2 +1,0 @@
-plack-middleware-dynamic-assets
-===============================
