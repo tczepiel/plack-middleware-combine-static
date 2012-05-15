@@ -108,18 +108,6 @@ sub _slurp {
 
 }
 
-sub _filenames {
-    my $self = shift;
-    my $env  = shift;
-
-    my $request = Plack::Request->new($env);
-    return unless $self->parameter;
-
-    my $files = $request->param( $self->parameter );
-
-    return [ split ',', $files ];
-}
-
 sub _minify {
     my $self = shift;
     my ( $content_type, $content ) = @_;
