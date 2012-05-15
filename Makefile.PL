@@ -8,7 +8,7 @@ WriteMakefile(
     PREREQ_PM    => {
         'Plack::Request' => 0,
         'Try::Tiny'      => 0,
-
+        'Perl6::Slurp'   => 0,
     },    # e.g., Module::Name => 1.1
     (
         $] >= 5.005
