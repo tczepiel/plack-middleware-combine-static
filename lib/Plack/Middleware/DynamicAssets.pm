@@ -34,10 +34,12 @@ our %minifiers = (
             root => '/var/www/',
             parameter => 'filez',
             minify => 1;
+
+        $app;
     };
 
 
-    # in the browset
+    # in the browser
     GET http://localhost:5000/?filez=one.js,two.js,three.js
     
     # or 

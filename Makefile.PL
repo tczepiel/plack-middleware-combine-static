@@ -10,6 +10,7 @@ WriteMakefile(
         'Try::Tiny'      => 0,
         'Perl6::Slurp'   => 0,
         'Class::Load'    => 0,
+        'parent'         => 0,
     },
     (
         $] >= 5.005
