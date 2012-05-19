@@ -4,20 +4,15 @@ use parent 'Plack::Middleware';
 
 use strict;
 use warnings;
-use Plack::Util::Accessor qw(minify parameter root cache path);
+use Plack::Util::Accessor qw(minify minifiers parameter root cache path);
 use Plack::Request;
 use Plack::MIME;
 use Perl6::Slurp;
-use Class::Load;
 use Digest::MD5 'md5_base64';
 use Try::Tiny;
 
 our $VERSION = '0.3';
 
-our %minifiers = (
-    'javascript' => 'JavaScript::Minifier::XS',
-    'css'        => 'CSS::Minifier::XS',
-);
 
 =head1 NAME Plack::Middleware::CombineStatic
 
@@ -37,7 +32,10 @@ our %minifiers = (
             parameter => 'filez',
             path   => qr{\.js|\.css},
             cache  => $cache,
-            minify => 1;
+            minify => 1,
+            minifiers => {
+                javascript => sub { JavaScript::Minifier::XS::minify(@_) },
+            };
 
         $app;
     };
@@ -143,16 +141,9 @@ sub _minify {
 
     return $content unless $self->minify();
 
-    my $type = $content_type =~ /javascript/ ? 'javascript' : 'css';
+    my $minifier = grep { $content_type =~ /$_/ } keys %{ $self->minifiers };
 
-    Class::Load::load_class( $minifiers{$type} );
-
-    if ( $type eq 'javascript' ) {
-        return JavaScript::Minifier::XS::minify($content);
-    }
-    else {
-        return CSS::Minifier::XS::minify($content);
-    }
+    return $self->minifiers->{$minifier}->($content);
 }
 
 sub _get_from_cache {
