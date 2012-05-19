@@ -1,18 +1,18 @@
 package Plack::Middleware::DynamicAssets;
 
-
 use parent 'Plack::Middleware';
 
 use strict;
 use warnings;
-use Plack::Util::Accessor qw(minify parameter root);
+use Plack::Util::Accessor qw(minify parameter root cache);
 use Plack::Request;
 use Plack::MIME;
 use Perl6::Slurp;
 use Class::Load;
+use Digest::MD5 'md5_base64';
 use Try::Tiny;
 
-our $VERSION = '0.1';
+our $VERSION = '0.2';
 
 our %minifiers = (
     'javascript' => 'JavaScript::Minifier::XS',
@@ -29,10 +29,13 @@ our %minifiers = (
 
     my $app = sub { ... };
 
+    my $cache = Some::Cache->new();
+
     builder {
         enable 'Plack::Middleware::DynamicAssets',
             root => '/var/www/',
             parameter => 'filez',
+            cache  => $cache,
             minify => 1;
 
         $app;
@@ -55,15 +58,24 @@ sub call {
     my $request = Plack::Request->new($env);
 
     my $ret = try {
-        my @files = split /,/, $request->param( $self->parameter );
-        my @paths = map { join '/', $self->root, $_ } @files;
 
-        my ( $content_type, $content ) = $self->_slurp(@paths);
+        my ( $content_type, $content );
+        if ( my $cached = $self->_get_from_cache($request) ) {
+            ( $content_type, $content ) = @$cached;
+        }
+        else {
+
+            my @files = split /,/, $request->param( $self->parameter );
+            my @paths = map { join '/', $self->root, $_ } @files;
+
+            ( $content_type, $content ) = $self->_slurp(@paths);
+
+            $content = $self->_minify( $content_type, $content );
+            $self->_set_in_cache( $request, [ $content_type, $content ] );
+
+        }
 
         if ($content) {
-
-            $content = $self->_minify( $content_type, $content )
-              if $self->minify;
 
             return [
                 200,
@@ -93,7 +105,7 @@ sub _fault {
             'Content-Length' => length($fault_message),
             'Content-Type'   => 'text/plain',
         ],
-        [ $fault_message ],
+        [$fault_message],
     ];
 }
 
@@ -102,13 +114,13 @@ sub _slurp {
 
     my ( $content_type, $content );
 
-    for my $filename (@_) {
-        $content_type ||= Plack::MIME->mime_type($filename);
+    for my $file (@_) {
+        $content_type ||= Plack::MIME->mime_type($file);
 
         die "mixing different file types isn't allowed"
-          if $content_type ne $filename;
+          if $content_type ne Plack::MIME->mime_type($file);
 
-        $content .= slurp;
+        $content .= slurp $file;
     }
 
     return $content_type, $content;
@@ -119,9 +131,11 @@ sub _minify {
     my $self = shift;
     my ( $content_type, $content ) = @_;
 
+    return $content unless $self->minify();
+
     my $type = $content_type =~ /javascript/ ? 'javascript' : 'css';
 
-    Class::Load::load_class($minifiers{$type});
+    Class::Load::load_class( $minifiers{$type} );
 
     if ( $type eq 'javascript' ) {
         return JavaScript::Minifier::XS::minify($content);
@@ -131,6 +145,23 @@ sub _minify {
     }
 }
 
+sub _get_from_cache {
+    my ( $self, $request ) = @_;
+
+    return unless $self->cache;
+
+    my $cache_key = md5_base64( $request->param( $self->parameter ) );
+    return $self->cache->get($cache_key);
+}
+
+sub _set_in_cache {
+    my ( $self, $request, $data ) = @_;
+
+    return unless $self->cache;
+
+    my $cache_key = md5_base64( $request->param( $self->parameter ) );
+    return $self->cache->set( $cache_key, $data );
+}
 
 =head1 SEE ALSO
 
