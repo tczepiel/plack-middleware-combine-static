@@ -11,6 +11,7 @@ WriteMakefile(
         'Perl6::Slurp'   => 0,
         'Class::Load'    => 0,
         'parent'         => 0,
+        'Digest::MD5'    => 0,
     },
     (
         $] >= 5.005
