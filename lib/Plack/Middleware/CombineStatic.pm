@@ -35,6 +35,7 @@ our %minifiers = (
         enable 'Plack::Middleware::CombineStatic',
             root => '/var/www/',
             parameter => 'filez',
+            path   => qr{\.js|\.css},
             cache  => $cache,
             minify => 1;
 
@@ -104,6 +105,8 @@ sub call {
 }
 
 sub _fault {
+
+    my $self = shift;
 
     my $fault_message = '[FAILED TO LOAD STATIC RESOURCE]';
     return [
