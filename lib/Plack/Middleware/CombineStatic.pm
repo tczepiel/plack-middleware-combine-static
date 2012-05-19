@@ -12,7 +12,7 @@ use Class::Load;
 use Digest::MD5 'md5_base64';
 use Try::Tiny;
 
-our $VERSION = '0.2';
+our $VERSION = '0.3';
 
 our %minifiers = (
     'javascript' => 'JavaScript::Minifier::XS',
@@ -65,20 +65,15 @@ sub call {
         }
         else {
 
-            my @files = split /,/, ( $request->param( $self->parameter ) || '' );
+            my @files = split /,/,
+              ( $request->param( $self->parameter ) || '' );
+
+            my $path_info = $request->path_info;
 
             return unless @files;
-            return if grep { $_ !~ /$self->path/ } @files;
+            return if grep { $_ !~ $self->path } @files;
 
-            my $root =
-              ref $self->root eq 'ARRAY' ? $self->root : [ $self->root ];
-
-            my @paths;
-            for my $file ( @files ) {
-                push @paths, map { join '/', $_, $file } @$root;
-            }
-
-            my @paths = grep { $_ if -e } @paths;
+            my @paths = map { join '/', $self->root, $path_info, $_ } @files;
 
             ( $content_type, $content ) = $self->_slurp(@paths);
 
