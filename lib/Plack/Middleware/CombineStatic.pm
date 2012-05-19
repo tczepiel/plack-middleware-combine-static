@@ -4,7 +4,7 @@ use parent 'Plack::Middleware';
 
 use strict;
 use warnings;
-use Plack::Util::Accessor qw(minify parameter root cache);
+use Plack::Util::Accessor qw(minify parameter root cache path);
 use Plack::Request;
 use Plack::MIME;
 use Perl6::Slurp;
@@ -65,8 +65,11 @@ sub call {
         }
         else {
 
-            my @files = split /,/, $request->param( $self->parameter );
+            my @files = split /,/, ( $request->param( $self->parameter ) || '' );
             my @paths = map { join '/', $self->root, $_ } @files;
+
+            return unless @files;
+            return if grep { $_ !~ /$self->path/ } @files;
 
             ( $content_type, $content ) = $self->_slurp(@paths);
 
@@ -133,6 +136,7 @@ sub _minify {
 
     return $content unless $self->minify();
 
+    warn "content type $content_type";
     my $type = $content_type =~ /javascript/ ? 'javascript' : 'css';
 
     Class::Load::load_class( $minifiers{$type} );
