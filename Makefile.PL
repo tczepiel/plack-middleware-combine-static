@@ -8,10 +8,9 @@ WriteMakefile(
     PREREQ_PM    => {
         'Plack::Request' => 0,
         'Try::Tiny'      => 0,
-        'Perl6::Slurp'   => 0,
-        'Class::Load'    => 0,
         'parent'         => 0,
         'Digest::MD5'    => 0,
+        'Path::Class'    => 0,
     },
     (
         $] >= 5.005

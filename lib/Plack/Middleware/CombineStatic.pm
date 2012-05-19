@@ -7,7 +7,7 @@ use warnings;
 use Plack::Util::Accessor qw(minifiers parameter root cache path);
 use Plack::Request;
 use Plack::MIME;
-use Perl6::Slurp;
+use Path::Class qw(dir);
 use Digest::MD5 'md5_base64';
 use Try::Tiny;
 
@@ -71,11 +71,12 @@ sub call {
             return unless @files;
             return if grep { $_ !~ $self->path } @files;
 
-            my @paths = map { join '/', $self->root, $path_info, $_ } @files;
+            my @paths = map { dir( $self->root, $path_info )->file($_) } @files;
 
             ( $content_type, $content ) = $self->_slurp(@paths);
 
             $content = $self->_minify( $content_type, $content );
+
             $self->_set_in_cache( $request, [ $content_type, $content ] );
 
         }
@@ -128,7 +129,7 @@ sub _slurp {
         die "mixing different file types isn't allowed"
           if $content_type ne Plack::MIME->mime_type($file);
 
-        $content .= slurp $file;
+        $content .= $file->slurp;
     }
 
     return $content_type, $content;
