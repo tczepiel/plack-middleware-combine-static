@@ -66,10 +66,19 @@ sub call {
         else {
 
             my @files = split /,/, ( $request->param( $self->parameter ) || '' );
-            my @paths = map { join '/', $self->root, $_ } @files;
 
             return unless @files;
             return if grep { $_ !~ /$self->path/ } @files;
+
+            my $root =
+              ref $self->root eq 'ARRAY' ? $self->root : [ $self->root ];
+
+            my @paths;
+            for my $file ( @files ) {
+                push @paths, map { join '/', $_, $file } @$root;
+            }
+
+            my @paths = grep { $_ if -e } @paths;
 
             ( $content_type, $content ) = $self->_slurp(@paths);
 
@@ -136,7 +145,6 @@ sub _minify {
 
     return $content unless $self->minify();
 
-    warn "content type $content_type";
     my $type = $content_type =~ /javascript/ ? 'javascript' : 'css';
 
     Class::Load::load_class( $minifiers{$type} );
