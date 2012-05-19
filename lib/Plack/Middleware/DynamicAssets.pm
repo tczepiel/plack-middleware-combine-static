@@ -101,8 +101,13 @@ sub _slurp {
     my $self = shift;
 
     my ( $content_type, $content );
-    for (@_) {
-        $content_type ||= Plack::MIME->mime_type($_);
+
+    for my $filename (@_) {
+        $content_type ||= Plack::MIME->mime_type($filename);
+
+        die "mixing different file types isn't allowed"
+          if $content_type ne $filename;
+
         $content .= slurp;
     }
 
