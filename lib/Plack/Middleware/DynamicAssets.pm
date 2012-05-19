@@ -1,4 +1,4 @@
-package Plack::Middleware::DynamicAssets;
+package Plack::Middleware::CombineStatic;
 
 use parent 'Plack::Middleware';
 
@@ -19,20 +19,20 @@ our %minifiers = (
     'css'        => 'CSS::Minifier::XS',
 );
 
-=head1 NAME Plack::Middleware::DynamicAssets
+=head1 NAME Plack::Middleware::CombineStatic
 
 
 =head1 SYNOPSIS
 
     use Plack::Builder;
-    use Plack;:Middleware::DynamicAssets;
+    use Plack;:Middleware::CombineStatic;
 
     my $app = sub { ... };
 
     my $cache = Some::Cache->new();
 
     builder {
-        enable 'Plack::Middleware::DynamicAssets',
+        enable 'Plack::Middleware::CombineStatic',
             root => '/var/www/',
             parameter => 'filez',
             cache  => $cache,
