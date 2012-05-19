@@ -4,7 +4,7 @@ use parent 'Plack::Middleware';
 
 use strict;
 use warnings;
-use Plack::Util::Accessor qw(minify minifiers parameter root cache path);
+use Plack::Util::Accessor qw(minifiers parameter root cache path);
 use Plack::Request;
 use Plack::MIME;
 use Perl6::Slurp;
@@ -32,9 +32,8 @@ our $VERSION = '0.3';
             parameter => 'filez',
             path   => qr{\.js|\.css},
             cache  => $cache,
-            minify => 1,
             minifiers => {
-                javascript => sub { JavaScript::Minifier::XS::minify(@_) },
+                'application/javascript'=> sub { JavaScript::Minifier::XS::minify(@_) },
             };
 
         $app;
@@ -94,7 +93,7 @@ sub call {
         }
     }
     catch {
-        return $self->_fault;
+        return $self->_fault($_);
     };
 
     return $ret if $ret;
@@ -106,7 +105,8 @@ sub _fault {
 
     my $self = shift;
 
-    my $fault_message = '[FAILED TO LOAD STATIC RESOURCE]';
+    my $fault_message = shift || '[FAILED TO LOAD STATIC RESOURCE]';
+
     return [
         500,
         [
@@ -139,11 +139,11 @@ sub _minify {
     my $self = shift;
     my ( $content_type, $content ) = @_;
 
-    return $content unless $self->minify();
+    return $content unless exists $self->minifiers->{$content_type};
 
-    my $minifier = grep { $content_type =~ /$_/ } keys %{ $self->minifiers };
+    my $minifier = $self->minifiers->{$content_type};
 
-    return $self->minifiers->{$minifier}->($content);
+    return $minifier->($content);
 }
 
 sub _get_from_cache {
